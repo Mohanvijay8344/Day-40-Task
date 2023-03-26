@@ -1,158 +1,123 @@
-import express, { request, response } from "express";
+require("dotenv").config();
+const e = require("express");
+const express = require("express");
 const app = express();
+
 app.use(express.json());
 
-const PORT = process.env.PORT;
-
-//Local variable to store rooms data
 const rooms = [
   {
-    roomID: 0,
-    roomName: "300",
-    noOfSeatsAvailable: "2",
-    amenities: ["Hot shower", "WIFI", "Intercom", "Room service"],
-    pricePerHr: 100,
-    bookedStatus: false,
-    customerDetails: {
-      customerName: "",
-      date: "",
-      startTime: "",
-      endTime: "",
-    },
+    name: "Elite",
+    seats: 100,
+    amenities: "wifi,projection screen,AC",
+    price: 1500,
+    roomId: "abc",
+    bookingDetails: [
+      {
+        customerName: "mayu",
+        date: new Date("2021-10-10"),
+        start: "07:00",
+        end: "10:00",
+        status: "confirmed",
+      },
+    ],
   },
   {
-    roomID: 1,
-    roomName: "301",
-    noOfSeatsAvailable: "2",
-    amenities: ["Hot shower", "WIFI", "Intercom", "Room service"],
-    pricePerHr: 100,
-    bookedStatus: true,
-    customerDetails: {
-      customerName: "Rajesh",
-      date: "16/10/2021",
-      startTime: 1100,
-      endTime: 1800,
-    },
-  },
-  {
-    roomID: 2,
-    roomName: "302",
-    noOfSeatsAvailable: "2",
-    amenities: ["Hot shower", "WIFI", "Intercom", "Room service"],
-    pricePerHr: 100,
-    bookedStatus: false,
-    customerDetails: {
-      customerName: "Mallesh",
-      date: "18/10/2021",
-      startTime: 1000,
-      endTime: 1800,
-    },
-  },
-  {
-    roomID: 3,
-    roomName: "303",
-    noOfSeatsAvailable: "2",
-    amenities: ["Hot shower", "WIFI", "Intercom", "Room service"],
-    pricePerHr: 100,
-    bookedStatus: false,
-    customerDetails: {
-      customerName: "",
-      date: "",
-      startTime: "",
-      endTime: "",
-    },
-  },
-  {
-    roomID: 4,
-    roomName: "304",
-    noOfSeatsAvailable: "2",
-    amenities: ["Hot shower", "WIFI", "Intercom", "Room service"],
-    pricePerHr: 100,
-    bookedStatus: false,
-    customerDetails: {
-      customerName: "Priya",
-      date: "16/11/2021",
-      startTime: 1200,
-      endTime: 2000,
-    },
+    name: "Premium",
+    seats: 150,
+    amenities: "wifi,projection screen,AC",
+    price: 2500,
+    roomId: "def",
+    bookingDetails: [
+      {
+        customerName: "baskar",
+        date: new Date("2021-10-11"),
+        start: "15:00",
+        end: "17:00",
+        status: "Payment Pending",
+      },
+    ],
   },
 ];
-
-//Home page route
-app.get("/", (request, response) => {
-  response.send("Hall Booking API");
+//create room
+app.post("/createRoom", (req, res) => {
+  rooms.push({
+    name: req.body.name,
+    seats: req.body.seats,
+    amenities: req.body.amenities,
+    price: req.body.price,
+    roomId: "ghi",
+    bookingDetails: [{}],
+  });
+  res.send("Room Created");
 });
 
-//Creating a room
-app.post("/rooms/create", (request, response) => {
-
-    const newRoom = request.body;
-    rooms.push(newRoom);
-    response.send(newRoom);
-})
-
-// Booking a room
-app.post("/rooms", (request, response) => {
-  const booking = request.body;
-
-    rooms.map((room) => {
-        if (room.roomID == booking.roomID) {
-          console.log(room);
-            if (room.customerDetails.date != booking.date) {
-                room.customerDetails.customerName = booking.customerName;
-                room.customerDetails.date = booking.date;
-                room.customerDetails.startTime = booking.startTime;
-                room.customerDetails.endTime = booking.endTime;
-                room.bookedStatus = !room.bookedStatus;
-                response.send("Room booked successfully")
-            } else {
-                response.send("Room already booked for that date. Please choose another room")
-            }
+//Book rooms
+app.post("/bookRoom", (req, res, next) => {
+  for (let i = 0; i < rooms.length; i++) {
+    console.log("a");
+    if (!(rooms[i].roomId === req.body.roomId)) {
+      return res.status(400).send({ error: "Invalid" });
+    } else {
+      let booking = {
+        customerName: req.body.name,
+        date: new Date(req.body.date),
+        start: req.body.start,
+        end: req.body.end,
+        status: "confirmed",
+      };
+      let result = undefined;
+      rooms[i].bookingDetails.forEach((book) => {
+        if (
+          book.date.getTime() == booking.date.getTime() &&
+          book.start === booking.start
+        ) {
+          result = 0;
+          console.log("in booking");
+          //  return res.status(400).send({error:"Please select different time slot"})
+        } else {
+          result = 1;
+          rooms[i].bookingDetails.push(booking);
+          // return res.status(200).send("Booking confirmed")
         }
-        return room;
-    })
-
-})
-
-//List all rooms with booked data
-app.get("/rooms", (request, response) => {
-  response.send(
-    rooms.map((room) => {
-      if (room.bookedStatus == true) {
-        return {
-          "Room name": room.roomName,
-          "Booked Status": "Booked",
-          "Customer Name": room.customerDetails.customerName,
-          "Date": room.customerDetails.date,
-          "Start Time": room.customerDetails.startTime,
-          "End Time": room.customerDetails.endTime,
-        };
-      } else {
-        return { "Room name": room.roomName, "Booked Status": "Vacant" };
-      }
-    })
-  );
+      });
+      if (result) return res.status(200).send("Booking confirmed");
+      else
+        return res
+          .status(400)
+          .send({ error: "Please select different time slot" });
+    }
+  }
 });
 
-//List all customers with booked data
-app.get("/customers", (request, response) => {
-  response.send(
-    rooms
-      .filter((room) => {
-        if (room.bookedStatus === true) {
-          return room;
-        }
-      })
-      .map((room) => {
-        return {
-          "Customer name": room.customerDetails.customerName,
-          "Room name": room.roomName,
-          Date: room.customerDetails.date,
-          "Start Time": room.customerDetails.startTime,
-          "End Time": room.customerDetails.endTime,
-        };
-      })
-  );
+//List the customers
+
+app.get("/listCustomer", (req, res) => {
+  let customerArray = [];
+
+  rooms.forEach((room) => {
+    let customerObj = { roomName: room.name };
+
+    room.bookingDetails.forEach((customer) => {
+      customerObj.customerName = customer.customerName;
+      customerObj.date = customer.date;
+      customerObj.start = customer.start;
+      customerObj.end = customer.end;
+
+      customerArray.push(customerObj);
+    });
+  });
+
+  res.send(customerArray);
 });
 
-app.listen(PORT, () => console.log("server has started at:", PORT));
+//List room along with booking details
+
+app.get("/listRooms", (req, res) => {
+  res.send(rooms);
+});
+
+const port = process.env.PORT || 5000;
+app.listen(port, () => {
+  console.log("server started in port", port);
+});

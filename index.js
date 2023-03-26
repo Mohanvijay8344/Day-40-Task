@@ -14,7 +14,7 @@ const rooms = [
     roomId: "abc",
     bookingDetails: [
       {
-        customerName: "mayu",
+        customerName: "Mohan",
         date: new Date("2021-10-10"),
         start: "07:00",
         end: "10:00",
@@ -30,7 +30,7 @@ const rooms = [
     roomId: "def",
     bookingDetails: [
       {
-        customerName: "baskar",
+        customerName: "Raj",
         date: new Date("2021-10-11"),
         start: "15:00",
         end: "17:00",
@@ -119,5 +119,5 @@ app.get("/listRooms", (req, res) => {
 
 const port = process.env.PORT || 5000;
 app.listen(port, () => {
-  console.log("server started in port", port);
+  console.log("server running in port", port);
 });
